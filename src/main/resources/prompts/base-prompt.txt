@@ -12,7 +12,6 @@ You must respond with a JSON object following this EXACT structure:
   "message": "Clean log message without embedded data",
   "level": "INFO|WARN|ERROR|DEBUG|TRACE",
   "user_id": "mobile_app",
-  "transaction_id": "corr-fab6e737-a",
   "request_path": "/api/data",
   "service_version": "2.1.5",
   "duration_ms": 893,
@@ -22,7 +21,6 @@ You must respond with a JSON object following this EXACT structure:
   "environment": "staging",
   "instance_id": "i-7a326e73",
   "region": "uswest-2b",
-  "correlation_id": "xyz789",
   "metadata": {
     "vehicle_status": "in service",
     "model": {
@@ -65,7 +63,6 @@ STRICT EMISSION RULES (CRITICAL)
    - "message": short, human-readable action/outcome; do NOT embed IDs, stack traces, or JSON here. Numbers like counts (e.g., “Inserted 74 rows”) are allowed.
    - "level": choose per scenario (INFO/WARN/ERROR/DEBUG/TRACE).
    - "user_id": realistic actor/channel (e.g., "mobile_app", "web_portal", "service_account"); pick one that fits {SCENARIO}.
-   - "transaction_id": keep the "corr-" prefix; use a plausible short ID suffix pattern like "corr-[a-z0-9]{6,10}-[a-z]".
    - "request_path": Spring-style API path (e.g., "/api/auth/login", "/api/orders/{id}", "/actuator/health"); match scenario.
    - "service_version": semantic version "X.Y.Z" with integers.
    - "duration_ms": integer latency in milliseconds; 5–120000 typical. Correlate with response_code (e.g., timeouts/slowness → larger values).
@@ -79,7 +76,6 @@ STRICT EMISSION RULES (CRITICAL)
    - "environment": one of "dev", "staging", "prod" (choose per {SCENARIO}).
    - "instance_id": EC2-like "i-" + 8–12 hex chars, or service-specific instance ID.
    - "region": realistic zone like "us-west-2b", "us-east-1a", "eu-central-1c". Keep same key and format.
-   - "correlation_id": short token/UUID used across services; do NOT duplicate other IDs.
    - "metadata": include 1–3 context fields relevant to {SCENARIO}; may be nested (objects/arrays), but keep it compact. Avoid PII and secrets.
    - "stack_trace": INCLUDE ONLY when level=ERROR. Use a realistic Java stack with 2–6 frames, package names, class.method(File.java:line).
 4) JSON must be valid:

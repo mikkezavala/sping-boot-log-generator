@@ -4,6 +4,7 @@ import com.log.generator.model.LogLevel;
 import com.log.generator.model.LogScenario;
 import com.log.generator.model.StructuredLogResponse;
 import com.log.generator.service.SyntheticLogGeneratorService;
+import com.log.generator.utils.RandomDataGenerator;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import java.time.Duration;
@@ -121,10 +122,13 @@ public class ScheduledTasks {
   }
 
   private static StructuredArgument getStructuredArgument(StructuredLogResponse entry) {
+    String transactionId = RandomDataGenerator.generateRequestId();
+    String correlationId = "corr-" + RandomDataGenerator.generateRandomId(31);
+
     return StructuredArguments.entries(
         Map.ofEntries(
             Map.entry("user_id", entry.getUserId()),
-            Map.entry("transaction_id", entry.getTransactionId()),
+            Map.entry("transaction_id", transactionId),
             Map.entry("request_path", entry.getRequestPath()),
             Map.entry("service_version", entry.getServiceVersion()),
             Map.entry("duration_ms", entry.getDurationMs()),
@@ -134,7 +138,7 @@ public class ScheduledTasks {
             Map.entry("environment", entry.getEnvironment()),
             Map.entry("instance_id", entry.getInstanceId()),
             Map.entry("region", entry.getRegion()),
-            Map.entry("correlation_id", entry.getCorrelationId())));
+            Map.entry("correlation_id", correlationId)));
   }
 
   private String generateLoggerName(LogScenario scenario) {

@@ -41,7 +41,7 @@ public final class RandomDataGenerator {
     }
 
     public static String generateRequestId() {
-        return generateRandomId(8);
+        return generateRandomId(36);
     }
 
     public static String generateThreadId() {

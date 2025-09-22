@@ -23,9 +23,6 @@ public class StructuredLogResponse {
   @JsonProperty("user_id")
   private String userId;
 
-  @JsonProperty("transaction_id")
-  private String transactionId;
-
   @JsonProperty("request_path")
   private String requestPath;
 
@@ -52,9 +49,6 @@ public class StructuredLogResponse {
 
   @JsonProperty("region")
   private String region;
-
-  @JsonProperty("correlation_id")
-  private String correlationId;
 
   @JsonProperty(value = "metadata", required = false)
   private Map<String, Object> metadata;

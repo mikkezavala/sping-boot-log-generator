@@ -46,9 +46,6 @@ ollama:
           "user_id": {
             "type": "string"
           },
-          "transaction_id": {
-            "type": "string"
-          },
           "request_path": {
             "type": "string"
           },
@@ -74,9 +71,6 @@ ollama:
             "type": "string"
           },
           "region": {
-            "type": "string"
-          },
-          "correlation_id": {
             "type": "string"
           },
           "metadata": {

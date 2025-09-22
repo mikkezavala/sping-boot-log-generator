@@ -11,9 +11,9 @@
   </appender>
 
   <appender name="SYNTHETIC_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>logs/synthetic.json</file>
+    <file>logs/synthetic.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-      <fileNamePattern>logs/synthetic.%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+      <fileNamePattern>logs/synthetic.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <maxFileSize>100MB</maxFileSize>
       <maxHistory>30</maxHistory>
       <totalSizeCap>3GB</totalSizeCap>
