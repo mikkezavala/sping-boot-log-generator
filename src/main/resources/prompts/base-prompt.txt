@@ -29,7 +29,7 @@ You must respond with a JSON object following this EXACT structure:
       "brand": "bmw"
     }
   },
-  "stack_trace": "java.lang.RuntimeException: Connection failed\n\tat com.example.DatabaseService.connect(DatabaseService.java:45)"
+  "stack_trace": "java.lang.RuntimeException: Connection failed\n\tat com.synthetic.DatabaseService.connect(DatabaseService.java:45)"
 }
 
 Examples of clean messages:
@@ -55,7 +55,7 @@ Requirements:
 - Metadata can contain nested objects and complex structures
 - **IMPORTANT: For ERROR level logs, include a "stack_trace" field with realistic Java stack trace**
 - **IMPORTANT: For non-ERROR logs, do NOT include stack_trace field**
-- Stack trace examples: "java.sql.SQLException: Connection timeout\n\tat com.example.DatabaseService.executeQuery(DatabaseService.java:123)", "java.lang.NullPointerException: User session not found\n\tat com.example.UserService.validateSession(UserService.java:67)"
+- Stack trace examples: "java.sql.SQLException: Connection timeout\n\tat com.synthetic.DatabaseService.executeQuery(DatabaseService.java:123)", "java.lang.NullPointerException: User session not found\n\tat com.example.UserService.validateSession(UserService.java:67)"
 - Metadata examples: {"vehicle_status": "in service", "model": {"brand": "bmw"}}, {"batch_info": {"size": 100, "status": "processing"}}, {"user_profile": {"tier": "premium", "region": "us-west"}}
 
 STRICT EMISSION RULES (CRITICAL)
@@ -72,8 +72,8 @@ STRICT EMISSION RULES (CRITICAL)
    - "session_id": short UUID-like or stable session token pattern (e.g., "a12f0c9e-7b1").
    - "response_code":
        INFO: 200–299 (success), sometimes 304
-       WARN: 408, 429, or 5xx if auto-retried; also 2xx with slow duration
-       ERROR: 4xx/5xx failure (e.g., 400, 401, 403, 404, 409, 422, 500, 502, 503, 504)
+       WARN: 408, 429, or 2xx with unusually high duration; 5xx only if transparently auto-retried and masked upstream
+       ERROR: 4xx/5xx actual failures (400, 401, 403, 404, 409, 422, 500, 502, 503, 504)
        DEBUG/TRACE: usually 2xx or 3xx unless explicitly tracing a failure
    - "thread_id": Spring/Tomcat-like pattern (e.g., "http-nio-8080-exec-12" or "thread-11").
    - "environment": one of "dev", "staging", "prod" (choose per {SCENARIO}).
@@ -96,6 +96,35 @@ STRICT EMISSION RULES (CRITICAL)
    - Vary values across generations; avoid repeating identical IDs.
    - No secrets, API keys, emails, or phone numbers.
 7) Deterministic single-shot: produce exactly one JSON object.
+
+### LEVEL / STATUS COHERENCE MATRIX (MANDATORY)
+- INFO → response_code ∈ {200–299, 304}; message must describe a successful outcome (e.g., “Payment transaction completed”).
+- WARN → response_code ∈ {408, 429} OR ∈ {200–299} with “Slow”/“Retry” semantics; message must reflect slowness, capacity, throttle, or transient retry. Do NOT include stack_trace.
+- ERROR → response_code ∈ {400, 401, 403, 404, 409, 422, 500, 502, 503, 504}; message must indicate a failure (e.g., “Failed to process payment transaction”). MUST include stack_trace.
+- DEBUG/TRACE → typically 2xx/3xx; message describes internal flow (“Request validated”, “Query plan chosen”). Do NOT include stack_trace unless ERROR (which DEBUG/TRACE are not).
+
+### RESPONSE CODE PICKER (DECISION RULES)
+Given {SCENARIO}, select the triad (level, response_code, message) as follows:
+1) If the scenario describes an **exception or failure** (e.g., NPE, SQL error, upstream 5xx) → level=ERROR; choose specific code:
+   - Validation/client input → 400 or 422
+   - AuthN/AuthZ → 401 or 403
+   - Not found → 404
+   - Conflict/duplicate → 409
+   - Upstream dependency failure → 502
+   - Service unavailable/overload → 503
+   - Timeout (server-side) → 504
+   - Generic server failure → 500
+2) If the scenario describes **timeout/throttle** without hard failure → level=WARN; response_code=408 (client timeout) or 429 (rate limited); message should mention retry/latency.
+3) If the scenario describes **success** → level=INFO (or DEBUG/TRACE if the scenario is about internal tracing); response_code in 2xx/304; message expresses successful outcome.
+4) Ensure duration_ms aligns:
+   - Timeouts (408/504) or slow WARN → typically ≥ 2000ms
+   - Normal INFO/DEBUG/TRACE → realistic p50–p95 for the scenario (e.g., 20–600ms for cache hits; 200–2000ms for heavy calls)
+
+### MESSAGE GUARDRAILS
+- ERROR messages start with a clear failure verb: “Failed…”, “Error…”, “Exception…”.
+- WARN messages include “Slow…”, “Retry…”, “Throttled…”, or “Capacity…”.
+- INFO/DEBUG/TRACE avoid failure language; DEBUG/TRACE may mention steps (“Validated payload”, “Fetched 3 items”).
+- Do not include IDs, stack traces, JSON, or secrets in "message".
 
 NOW GENERATE
 Use the rules above to produce one JSON object for {SCENARIO}.
