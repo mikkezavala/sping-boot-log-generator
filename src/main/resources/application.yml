@@ -93,13 +93,13 @@ resilience4j:
         sliding-window-type: COUNT_BASED
         sliding-window-size: 200
         minimum-number-of-calls: 90
-        permitted-number-of-calls-in-half-open-state: 16
+        permitted-number-of-calls-in-half-open-state: ${scheduled.max-parallel}
         automatic-transition-from-open-to-half-open-enabled: true
 
         # Let the TimeLimiter enforce latency; don't open for "slow" alone
         slow-call-duration-threshold: 3s   # was 2s
-        slow-call-rate-threshold: 85       # was 50%
-        wait-duration-in-open-state: 5s   # gives the model a real breather
+        slow-call-rate-threshold: 90       # was 50%
+        wait-duration-in-open-state: 15s   # gives the model a real breather
 
         record-exceptions:
           - java.util.concurrent.TimeoutException
@@ -116,7 +116,7 @@ resilience4j:
     instances:
       ollama:
         max-attempts: 6
-        wait-duration: 500ms
+        wait-duration: ${scheduled.task.synthetic-logs.fixed-rate}
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2.0
         enable-randomized-wait: true
@@ -129,7 +129,7 @@ resilience4j:
   bulkhead:
     instances:
       ollama:
-        max-concurrent-calls: 16
+        max-concurrent-calls: ${scheduled.max-parallel}
         max-wait-duration: 0
 
   ratelimiter:
