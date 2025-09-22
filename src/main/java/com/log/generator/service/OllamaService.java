@@ -81,7 +81,6 @@ public class OllamaService {
     try {
       JsonNode node = objectMapper.readTree(jsonResponse).get("response");
       JsonNode responseNode = parseJsonNode(node);
-
       return objectMapper.treeToValue(responseNode, StructuredLogResponse.class);
     } catch (Exception ex) {
       log.error("{} Failed to parse JSON: {}", LOG_PREFIX, ex.getMessage());
@@ -120,4 +119,5 @@ public class OllamaService {
       return null;
     }
   }
+
 }
