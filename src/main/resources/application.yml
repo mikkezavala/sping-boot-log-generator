@@ -18,7 +18,7 @@ management:
         enabled: true
 
 scheduled:
-  max-parallel: 12
+  max-parallel: 16
   task:
     synthetic-logs:
       fixed-rate: 5000
@@ -92,14 +92,14 @@ resilience4j:
         failure-rate-threshold: 40
         sliding-window-type: COUNT_BASED
         sliding-window-size: 200
-        minimum-number-of-calls: 80
+        minimum-number-of-calls: 90
         permitted-number-of-calls-in-half-open-state: 16
         automatic-transition-from-open-to-half-open-enabled: true
 
         # Let the TimeLimiter enforce latency; don't open for "slow" alone
         slow-call-duration-threshold: 3s   # was 2s
         slow-call-rate-threshold: 85       # was 50%
-        wait-duration-in-open-state: 12s   # gives the model a real breather
+        wait-duration-in-open-state: 5s   # gives the model a real breather
 
         record-exceptions:
           - java.util.concurrent.TimeoutException
@@ -129,7 +129,7 @@ resilience4j:
   bulkhead:
     instances:
       ollama:
-        max-concurrent-calls: 8
+        max-concurrent-calls: 16
         max-wait-duration: 0
 
   ratelimiter:
