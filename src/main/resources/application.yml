@@ -1,0 +1,152 @@
+spring:
+  main:
+    banner-mode: off
+  application:
+    name: synthetic-log-generator
+  output:
+    ansi:
+      enabled: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,info,metric
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+scheduled:
+  max-parallel: 12
+  task:
+    synthetic-logs:
+      fixed-rate: 5000
+    legacy-logs:
+      fixed-rate: 0
+
+ollama:
+  enabled: true
+  timeoutSeconds: 120
+  base-url: http://localhost:11434
+  model: gemma3
+  formats:
+    app-log: |
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Clean log message without embedded data"
+          },
+          "level": {
+            "type": "string",
+            "enum": ["INFO", "WARN", "ERROR", "DEBUG", "TRACE"]
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "transaction_id": {
+            "type": "string"
+          },
+          "request_path": {
+            "type": "string"
+          },
+          "service_version": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "integer"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "response_code": {
+            "type": "integer"
+          },
+          "thread_id": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "instance_id": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "correlation_id": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "stack_trace": {
+            "type": "string"
+          }
+        },
+        "required": ["message", "level"],
+        "additionalProperties": false
+      }
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      ollama:
+        failure-rate-threshold: 40
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 200
+        minimum-number-of-calls: 80
+        permitted-number-of-calls-in-half-open-state: 16
+        automatic-transition-from-open-to-half-open-enabled: true
+
+        # Let the TimeLimiter enforce latency; don't open for "slow" alone
+        slow-call-duration-threshold: 3s   # was 2s
+        slow-call-rate-threshold: 85       # was 50%
+        wait-duration-in-open-state: 12s   # gives the model a real breather
+
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+
+
+  timelimiter:
+    instances:
+      ollama:
+        timeout-duration: 2s
+        cancel-running-future: true
+
+  retry:
+    instances:
+      ollama:
+        max-attempts: 6
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2.0
+        enable-randomized-wait: true
+        randomized-wait-factor: 0.25
+        retry-exceptions:
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+
+
+  bulkhead:
+    instances:
+      ollama:
+        max-concurrent-calls: 8
+        max-wait-duration: 0
+
+  ratelimiter:
+    instances:
+      ollama:
+        limit-for-period: 20
+        limit-refresh-period: 1s
+        timeout-duration: 0
+
+logging:
+  level:
+    com.log.generator: INFO
+    reactor.netty: INFO
+    io.github.resilience4j: INFO
