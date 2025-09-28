@@ -46,25 +46,34 @@ public class OllamaService {
       LogScenario scenario, LogLevel logLevel, Map<String, Object> contextData
   ) {
     int requestId = requestCounter.incrementAndGet();
-    return callOllama(buildPrompt(scenario, logLevel, contextData)).doOnSuccess(result ->
-        log.info("{} Request completed request_id={} message='{}'", LOG_PREFIX, requestId,
-            result.getMessage()
-        )
-    );
+    long start = System.nanoTime();
+
+    return callOllama(buildPrompt(scenario, logLevel, contextData))
+        .doOnSuccess(result ->
+            log.info("{} Request completed request_id={} duration={}s message='{}'",
+                LOG_PREFIX,
+                requestId,
+                (System.nanoTime() - start) / 1_000_000 / 1_000,
+                result.getMessage()));
   }
 
   private Mono<StructuredLogResponse> callOllama(String prompt) {
     Map<String, Object> request = new HashMap<>();
+    Map<String, Object> options = Map.of(
+        "temperature", 0.7,
+        "num_predict", 300,
+        "top_p", 0.9,
+        "repeat_penalty", 1.1,
+        "num_batch", 32,
+        "num_gpu", -1,
+        "num_ctx", 3072
+    );
     request.put("model", ollamaOptions.getModel());
     request.put("prompt", prompt);
     request.put("stream", false);
     request.put("format", outputSchema("app-log"));
-    request.put("options", Map.of(
-        "temperature", 0.7,
-        "num_predict", 1000,
-        "top_p", 0.9,
-        "repeat_penalty", 1.1
-    ));
+    request.put("options", options);
+    request.put("stop", "}\n");
 
     log.info("{} Request POST={}{} Model={}", LOG_PREFIX, ollamaOptions.getBaseUrl(), REQUEST_URI,
         ollamaOptions.getModel());

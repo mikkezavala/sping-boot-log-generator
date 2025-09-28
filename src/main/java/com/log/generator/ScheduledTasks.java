@@ -116,7 +116,7 @@ public class ScheduledTasks {
   }
 
   private RetryBackoffSpec retrySpec() {
-    return Retry.backoff(2, Duration.ofMillis(100)).filter(ex ->
+    return Retry.backoff(1, Duration.ofSeconds(5)).filter(ex ->
         ex instanceof TimeoutException || ex instanceof WebClientRequestException
     );
   }

@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @Service
@@ -21,8 +20,6 @@ public class SyntheticLogGeneratorService {
   private final OllamaService ollamaService;
   private final AtomicLong entryCounter = new AtomicLong(0);
 
-  private static final int MAX_PARALLEL = 10;
-  private static final int MAX_QUEUE = 100;
   private static final String SCHEDULER_NAME = "SYN-LOG-GEN";
   private static final String LOG_PREFIX = "[SVC-GENERATOR]:";
 
@@ -41,8 +38,7 @@ public class SyntheticLogGeneratorService {
     );
 
     return Mono.fromCallable(() -> generateEnhancedContextData(scenario))
-        .subscribeOn(Schedulers.newBoundedElastic(MAX_PARALLEL, MAX_QUEUE, SCHEDULER_NAME)
-        ).flatMap(contextData ->
+        .flatMap(contextData ->
             ollamaService.generateLogMessage(scenario, level, contextData)
         ).doOnSuccess(response -> log.info(
                 "{} Log entry generated entry_id={} level={} message_length={}",
